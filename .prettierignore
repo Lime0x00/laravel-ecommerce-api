@@ -1,0 +1,11 @@
+/vendor
+/storage
+/bootstrap/cache
+/public/build
+node_modules
+composer.lock
+package-lock.json
+.phpunit.result.cache
+*.sqlite
+*.php
+*.blade.php
