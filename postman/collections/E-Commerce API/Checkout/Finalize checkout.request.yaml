@@ -1,0 +1,14 @@
+$kind: http-request
+url: '{{baseUrl}}/orders/checkout'
+method: POST
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ''
+auth:
+  type: bearer
+  credentials:
+    token: '{{bearerToken}}'
+examples: ./.resources/Finalize checkout.resources/examples
+order: 1000

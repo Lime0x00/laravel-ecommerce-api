@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality-assurance:
+    name: Quality Assurance & Testing
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, curl, libxml, pdo_sqlite
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install PHP Dependencies
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Install JS Dependencies
+        run: npm ci
+
+      - name: Prepare Environment
+        run: |
+          php -r "file_exists('.env') || copy('.env.testing', '.env');"
+          php artisan key:generate
+          touch database/testing.sqlite
+
+      - name: Run Multi-format Linting (Prettier)
+        run: npx prettier --check .
+
+      - name: Run PHP Linting (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Run Static Analysis (Larastan)
+        run: vendor/bin/phpstan analyze
+
+      - name: Execute Automated Tests (Pest)
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/testing.sqlite
+        run: vendor/bin/pest

@@ -1,0 +1,30 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/auth/refresh'
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: 'Added as a part of security scheme: bearer'
+  body:
+    type: text
+    content: ''
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "success",
+        "data": {
+          "access_token": "your-jwt-token-here",
+          "token_type": "bearer",
+          "expires_in": 3600
+        }
+      }
+order: 1000

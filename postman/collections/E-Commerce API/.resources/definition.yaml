@@ -1,0 +1,7 @@
+$kind: collection
+description: |
+  Strict headless REST API for an E-Commerce platform.
+  This specification follows senior-grade engineering standards for pagination, 
+  relational data, and automated security parsing.
+variables:
+  baseUrl: '{{baseUrl}}'

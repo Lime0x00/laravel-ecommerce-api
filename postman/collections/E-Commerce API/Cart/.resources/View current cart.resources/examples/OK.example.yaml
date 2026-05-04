@@ -1,0 +1,34 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/cart'
+  method: GET
+  headers:
+    Accept: application/json
+  body:
+    type: text
+    content: ''
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "success",
+        "data": {
+          "id": 10,
+          "items": [
+            {
+              "product_id": 1,
+              "product_name": "Wireless Headphones",
+              "quantity": 2,
+              "unit_price": 99.99,
+              "subtotal": 199.98
+            }
+          ],
+          "total": 199.98
+        }
+      }
+order: 1000

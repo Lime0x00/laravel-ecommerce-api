@@ -1,0 +1,14 @@
+$kind: http-request
+url: '{{baseUrl}}/auth/refresh'
+method: POST
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ''
+auth:
+  type: bearer
+  credentials:
+    token: '{{bearerToken}}'
+examples: ./.resources/Refresh JWT token.resources/examples
+order: 3000

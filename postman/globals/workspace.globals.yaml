@@ -1,0 +1,5 @@
+values:
+  - key: appName
+    value: Laravel E-Commerce API
+    enabled: true
+    type: default

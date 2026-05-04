@@ -1,0 +1,32 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/auth/profile'
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: 'Added as a part of security scheme: bearer'
+  body:
+    type: text
+    content: ''
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "success",
+        "data": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "john@example.com",
+          "role": "customer",
+          "created_at": "2026-05-02T14:00:00Z"
+        }
+      }
+order: 1000

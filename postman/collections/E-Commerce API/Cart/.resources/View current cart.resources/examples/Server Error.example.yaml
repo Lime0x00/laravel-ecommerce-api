@@ -1,0 +1,22 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/cart'
+  method: GET
+  headers:
+    Accept: application/json
+  body:
+    type: text
+    content: ''
+response:
+  statusCode: 500
+  statusText: Internal Server Error
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "error",
+        "message": "An unexpected error occurred."
+      }
+order: 2000

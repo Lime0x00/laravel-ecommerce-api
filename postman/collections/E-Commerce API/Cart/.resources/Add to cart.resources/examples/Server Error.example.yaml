@@ -1,0 +1,28 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/cart/:product_id'
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+  pathVariables:
+    product_id: '1'
+  body:
+    type: json
+    content: |-
+      {
+        "quantity": 1
+      }
+response:
+  statusCode: 500
+  statusText: Internal Server Error
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "error",
+        "message": "An unexpected error occurred."
+      }
+order: 3000

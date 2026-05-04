@@ -1,0 +1,13 @@
+$kind: http-request
+url: '{{baseUrl}}/products?page=1&search=headphones'
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  page: '1'
+  search: headphones
+body:
+  type: text
+  content: ''
+examples: ./.resources/List all products.resources/examples
+order: 1000

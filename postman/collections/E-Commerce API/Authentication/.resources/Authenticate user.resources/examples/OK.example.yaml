@@ -1,0 +1,31 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/auth/login'
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "email": "admin@example.com",
+        "password": "password123"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "success",
+        "data": {
+          "access_token": "your-jwt-token-here",
+          "token_type": "bearer",
+          "expires_in": 3600
+        }
+      }
+order: 1000

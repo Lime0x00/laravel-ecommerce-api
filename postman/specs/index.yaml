@@ -1,0 +1,461 @@
+openapi: '3.0.3'
+info:
+  version: '1.0.0'
+  title: 'E-Commerce REST API'
+  description: |
+    Strict headless REST API for an E-Commerce platform.
+    This specification follows senior-grade engineering standards for pagination, 
+    relational data, and automated security parsing.
+  x-postman-event:
+    - listen: test
+      script:
+        type: text/javascript
+        exec:
+          - 'const response = pm.response.json();'
+          - 'if (response.data && response.data.access_token) {'
+          - "    pm.environment.set('jwt_token', response.data.access_token);"
+          - "    console.log('JWT Token automated successfully.');"
+          - '}'
+
+servers:
+  - url: '{{baseUrl}}'
+    description: Dynamic base URL using Postman variables
+
+tags:
+  - name: Authentication
+    description: User registration, login, and token management.
+  - name: Catalog
+    description: Product discovery and category browsing.
+  - name: Cart
+    description: Managing shopping shopping items.
+  - name: Checkout
+    description: Order processing and cart conversion.
+  - name: Orders
+    description: User order history.
+  - name: Admin
+    description: Management endpoints for products and orders.
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      operationId: register
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+              example:
+                status: success
+                message: User registered successfully.
+                data:
+                  id: 1
+                  name: John Doe
+                  email: john@example.com
+                  role: customer
+                  created_at: '2026-05-02T14:00:00Z'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /auth/login:
+    post:
+      summary: Authenticate user
+      operationId: login
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+              example:
+                status: success
+                data:
+                  access_token: 'your-jwt-token-here'
+                  token_type: bearer
+                  expires_in: 3600
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /auth/refresh:
+    post:
+      summary: Refresh JWT token
+      operationId: refreshToken
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+              example:
+                status: success
+                data:
+                  access_token: 'your-jwt-token-here'
+                  token_type: bearer
+                  expires_in: 3600
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /auth/profile:
+    get:
+      summary: Get user profile
+      operationId: getProfile
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserResponse' }
+              example:
+                status: success
+                data:
+                  id: 1
+                  name: John Doe
+                  email: john@example.com
+                  role: customer
+                  created_at: '2026-05-02T14:00:00Z'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /products:
+    get:
+      summary: List all products
+      operationId: getProducts
+      tags: [Catalog]
+      parameters:
+        - name: page
+          in: query
+          schema: { $ref: '#/components/schemas/PageNumber' }
+        - name: search
+          in: query
+          schema: { $ref: '#/components/schemas/SearchString' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductListResponse' }
+              example:
+                status: success
+                data:
+                  - id: 1
+                    name: 'Wireless Headphones'
+                    slug: 'wireless-headphones'
+                    price: 99.99
+                    stock: 50
+                meta:
+                  current_page: 1
+                  last_page: 5
+                  per_page: 15
+                  total: 75
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /cart:
+    get:
+      summary: View current cart
+      operationId: getCart
+      tags: [Cart]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+              example:
+                status: success
+                data:
+                  id: 10
+                  items:
+                    - product_id: 1
+                      product_name: 'Wireless Headphones'
+                      quantity: 2
+                      unit_price: 99.99
+                      subtotal: 199.98
+                  total: 199.98
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /cart/{product_id}:
+    post:
+      summary: Add to cart
+      operationId: addToCart
+      tags: [Cart]
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuantityRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+              example:
+                status: success
+                message: 'Cart updated.'
+                data: {}
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+  /orders/checkout:
+    post:
+      summary: Finalize checkout
+      operationId: checkout
+      tags: [Checkout]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+              example:
+                status: success
+                data:
+                  id: 5001
+                  total_amount: 199.98
+                  status: pending
+                  items:
+                    - product_name: 'Wireless Headphones'
+                      quantity: 2
+                      price: 99.99
+                  created_at: '2026-05-02T14:00:00Z'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '500': { $ref: '#/components/responses/ServerError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            status: error
+            message: 'Unauthenticated.'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            status: error
+            message: 'Access Denied.'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            status: error
+            message: 'Resource not found.'
+    ValidationError:
+      description: Validation Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            status: error
+            message: 'The given data was invalid.'
+            data:
+              email: ['The email has already been taken.']
+    ServerError:
+      description: Server Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          example:
+            status: error
+            message: 'An unexpected error occurred.'
+
+  schemas:
+    ResourceId: { type: integer, minimum: 1, example: 1 }
+    PageNumber: { type: integer, minimum: 1, default: 1, example: 1 }
+    SearchString: { type: string, example: 'headphones' }
+    StatusString: { type: string, example: success }
+    MessageString: { type: string, nullable: true, example: 'Operation successful.' }
+    EmailString: { type: string, format: email, example: 'john@example.com' }
+    PasswordString: { type: string, minLength: 8, example: 'secret123456' }
+    RoleString: { type: string, enum: [customer, admin], example: 'customer' }
+    TokenString: { type: string, example: 'your-jwt-token-here' }
+    TimestampString: { type: string, format: date-time, example: '2026-05-02T14:00:00Z' }
+    PriceAmount: { type: number, example: 99.99 }
+    QuantityValue: { type: integer, minimum: 1, example: 1 }
+    GenericName: { type: string, example: 'Wireless Headphones' }
+    GenericSlug: { type: string, example: 'wireless-headphones' }
+    OrderStatus: { type: string, example: 'pending' }
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page: { type: integer, example: 1 }
+        last_page: { type: integer, example: 5 }
+        per_page: { type: integer, example: 15 }
+        total: { type: integer, example: 75 }
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { $ref: '#/components/schemas/GenericName' }
+        email: { $ref: '#/components/schemas/EmailString' }
+        password: { $ref: '#/components/schemas/PasswordString' }
+        role: { $ref: '#/components/schemas/RoleString' }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { $ref: '#/components/schemas/EmailString' }
+        password: { $ref: '#/components/schemas/PasswordString' }
+
+    LoginData:
+      type: object
+      properties:
+        access_token: { $ref: '#/components/schemas/TokenString' }
+        token_type: { type: string, example: bearer }
+        expires_in: { type: integer, example: 3600 }
+
+    LoginResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        data: { $ref: '#/components/schemas/LoginData' }
+
+    UserData:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        name: { type: string, example: 'John Doe' }
+        email: { $ref: '#/components/schemas/EmailString' }
+        role: { $ref: '#/components/schemas/RoleString' }
+        created_at: { $ref: '#/components/schemas/TimestampString' }
+
+    UserResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        data: { $ref: '#/components/schemas/UserData' }
+
+    Product:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        name: { $ref: '#/components/schemas/GenericName' }
+        slug: { $ref: '#/components/schemas/GenericSlug' }
+        price: { $ref: '#/components/schemas/PriceAmount' }
+        stock: { type: integer, example: 50 }
+
+    ProductCollection:
+      type: array
+      items: { $ref: '#/components/schemas/Product' }
+
+    ProductListResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        data: { $ref: '#/components/schemas/ProductCollection' }
+        meta: { $ref: '#/components/schemas/PaginationMeta' }
+
+    CartItem:
+      type: object
+      properties:
+        product_id: { $ref: '#/components/schemas/ResourceId' }
+        product_name: { $ref: '#/components/schemas/GenericName' }
+        quantity: { $ref: '#/components/schemas/QuantityValue' }
+        unit_price: { $ref: '#/components/schemas/PriceAmount' }
+        subtotal: { $ref: '#/components/schemas/PriceAmount' }
+
+    CartItemCollection:
+      type: array
+      items: { $ref: '#/components/schemas/CartItem' }
+
+    CartData:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        items: { $ref: '#/components/schemas/CartItemCollection' }
+        total: { $ref: '#/components/schemas/PriceAmount' }
+
+    CartResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        data: { $ref: '#/components/schemas/CartData' }
+
+    QuantityRequest:
+      type: object
+      required: [quantity]
+      properties:
+        quantity: { $ref: '#/components/schemas/QuantityValue' }
+
+    OrderItem:
+      type: object
+      properties:
+        product_name: { $ref: '#/components/schemas/GenericName' }
+        quantity: { $ref: '#/components/schemas/QuantityValue' }
+        price: { $ref: '#/components/schemas/PriceAmount' }
+
+    OrderItemCollection:
+      type: array
+      items: { $ref: '#/components/schemas/OrderItem' }
+
+    OrderData:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        total_amount: { $ref: '#/components/schemas/PriceAmount' }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        items: { $ref: '#/components/schemas/OrderItemCollection' }
+        created_at: { $ref: '#/components/schemas/TimestampString' }
+
+    OrderResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        data: { $ref: '#/components/schemas/OrderData' }
+
+    GenericData:
+      type: object
+      nullable: true
+      example: {}
+
+    SuccessResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
+        data: { $ref: '#/components/schemas/GenericData' }
+
+    ErrorResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
+        data: { $ref: '#/components/schemas/GenericData' }

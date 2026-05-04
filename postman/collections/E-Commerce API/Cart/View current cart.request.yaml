@@ -1,0 +1,10 @@
+$kind: http-request
+url: '{{baseUrl}}/cart'
+method: GET
+headers:
+  Accept: application/json
+body:
+  type: text
+  content: ''
+examples: ./.resources/View current cart.resources/examples
+order: 1000

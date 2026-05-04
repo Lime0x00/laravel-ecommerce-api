@@ -1,0 +1,39 @@
+$kind: http-example
+request:
+  url: '{{baseUrl}}/products?page=1&search=headphones'
+  method: GET
+  headers:
+    Accept: application/json
+  queryParams:
+    page: '1'
+    search: headphones
+  body:
+    type: text
+    content: ''
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": "success",
+        "data": [
+          {
+            "id": 1,
+            "name": "Wireless Headphones",
+            "slug": "wireless-headphones",
+            "price": 99.99,
+            "stock": 50
+          }
+        ],
+        "meta": {
+          "current_page": 1,
+          "last_page": 5,
+          "per_page": 15,
+          "total": 75
+        }
+      }
+order: 1000
