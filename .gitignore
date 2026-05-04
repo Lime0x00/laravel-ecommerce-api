@@ -26,9 +26,3 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-
-# Project-Specific Staff
-.postman/
-docs/*.mmd
-SoftwareEngineeringProject(Requirements)-1.pdf
-lint_md.cjs

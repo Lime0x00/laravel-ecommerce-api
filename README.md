@@ -67,7 +67,6 @@ The API uses a **Postman-driven contract**.
 │   └── Services/        # Business Logic Layer
 ├── database/
 │   └── migrations/      # Normalized Database Schema
-├── docs/                # Architectural Reports & Blueprints
 ├── postman/
 │   ├── collections/     # Pre-configured API Tests
 │   └── specs/           # OpenAPI 3.0.3 Source of Truth
@@ -91,9 +90,7 @@ docker-compose exec app ./vendor/bin/pint
 ```
 
 ## 📖 Key Documentation
-- **Architecture Blueprints:** `docs/ARCHITECTURE.md`
-- **Audit Reports:** `docs/SE_ARCHITECTURAL_REPORT.md`
-- **API Spec:** `postman/specs/index.yaml`
+- **API Spec:** `postman/specs/index.yaml` (OpenAPI 3.0.3 Source of Truth)
 
 ---
 
