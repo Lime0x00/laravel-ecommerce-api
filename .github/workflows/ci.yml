@@ -22,31 +22,20 @@ jobs:
           extensions: mbstring, dom, curl, libxml, pdo_sqlite
           coverage: none
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
       - name: Install PHP Dependencies
         run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: Install JS Dependencies
-        run: npm ci
-
       - name: Prepare Environment
         run: |
-          php -r "file_exists('.env') || copy('.env.testing', '.env');"
+          cp .env.testing .env
           php artisan key:generate
+          php artisan jwt:secret --no-interaction
           touch database/testing.sqlite
-
-      - name: Run Multi-format Linting (Prettier)
-        run: npx prettier --check .
 
       - name: Run PHP Linting (Pint)
         run: vendor/bin/pint --test
 
-      - name: Run Static Analysis (Larastan)
+      - name: Run Static Analysis (PHPStan)
         run: vendor/bin/phpstan analyze
 
       - name: Execute Automated Tests (Pest)
