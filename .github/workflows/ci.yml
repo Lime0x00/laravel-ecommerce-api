@@ -27,6 +27,8 @@ jobs:
 
       - name: Prepare Environment
         run: |
+          mkdir -p bootstrap/cache storage/framework/{cache,sessions,views}
+          chmod -R 775 bootstrap/cache storage
           cp .env.testing .env
           php artisan key:generate
           php artisan jwt:secret --no-interaction
