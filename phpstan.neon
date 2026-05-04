@@ -9,8 +9,3 @@ parameters:
     level: 5
 
     ignoreErrors:
-        # Add ignores here if needed
-        # - '#PHPDoc tag @var# '
-
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false

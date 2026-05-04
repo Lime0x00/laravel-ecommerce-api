@@ -38,7 +38,7 @@ jobs:
         run: vendor/bin/pint --test
 
       - name: Run Static Analysis (PHPStan)
-        run: vendor/bin/phpstan analyze
+        run: vendor/bin/phpstan analyze --memory-limit=1G
 
       - name: Execute Automated Tests (Pest)
         env:
