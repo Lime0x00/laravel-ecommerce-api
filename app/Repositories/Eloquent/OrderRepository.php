@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Order;
 use App\Repositories\Contracts\OrderRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class OrderRepository extends BaseRepository implements OrderRepositoryInterface
 {
@@ -18,9 +19,15 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
     /**
      * Retrieve all orders belonging to a specific user.
      */
-    public function findByUserId(int $userId): mixed
-    {
-        return null;
+    public function findByUserId(
+        int $userId,
+        int $perPage = 10
+    ): LengthAwarePaginator {
+        return $this->model
+            ->where('user_id', $userId)
+            ->with(['items.product'])
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**

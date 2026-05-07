@@ -2,12 +2,17 @@
 
 namespace App\Repositories\Contracts;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
 interface OrderRepositoryInterface extends BaseRepositoryInterface
 {
     /**
-     * Retrieve all orders belonging to a specific user.
+     * Retrieve paginated orders belonging to a specific user.
      */
-    public function findByUserId(int $userId): mixed;
+    public function findByUserId(
+        int $userId,
+        int $perPage = 10
+    ): LengthAwarePaginator;
 
     /**
      * Create an order from a finalized cart.
