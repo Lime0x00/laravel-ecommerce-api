@@ -11,7 +11,8 @@ use Throwable;
 class AuthService extends BaseService
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly CartService $cartService
     ) {}
 
     /**
@@ -33,7 +34,7 @@ class AuthService extends BaseService
      *
      * @throws Throwable
      */
-    public function login(string $email, string $password): array
+    public function login(string $email, string $password, ?string $sessionId = null): array
     {
         $user = $this->userRepository->findByEmail($email);
 
@@ -42,6 +43,8 @@ class AuthService extends BaseService
         }
 
         $token = JWTAuth::fromUser($user);
+
+        $this->cartService->mergeGuestCartIntoUser($sessionId, (int) $user->id);
 
         return [
             'access_token' => $token,
