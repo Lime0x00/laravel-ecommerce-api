@@ -2,6 +2,7 @@
 
 use App\Models\Order;
 use App\Models\User;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 it('allows admin to update order status', function () {
     $admin = User::factory()->create([
@@ -12,10 +13,13 @@ it('allows admin to update order status', function () {
         'status' => 'pending',
     ]);
 
+    $token = JWTAuth::fromUser($admin);
+
     $response = $this
-        ->actingAs($admin, 'api')
         ->putJson("/api/admin/orders/{$order->id}/status", [
             'status' => 'completed',
+        ], [
+            'Authorization' => "Bearer {$token}",
         ]);
 
     $response
@@ -31,9 +35,12 @@ it('prevents customers from accessing admin routes', function () {
         'role' => 'customer',
     ]);
 
+    $token = JWTAuth::fromUser($customer);
+
     $response = $this
-        ->actingAs($customer, 'api')
-        ->getJson('/api/admin/orders');
+        ->getJson('/api/admin/orders', [
+            'Authorization' => "Bearer {$token}",
+        ]);
 
     $response->assertForbidden();
 });
