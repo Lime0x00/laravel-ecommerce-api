@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseApiController;
 use App\Http\Requests\OrderHistoryRequest;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
@@ -11,8 +10,7 @@ class OrderController extends BaseApiController
 {
     public function __construct(
         private readonly OrderService $orderService
-    ) {
-    }
+    ) {}
 
     /**
      * Display authenticated user's order history.
