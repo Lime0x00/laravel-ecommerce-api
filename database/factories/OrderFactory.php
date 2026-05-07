@@ -16,11 +16,11 @@ class OrderFactory extends Factory
             'user_id' => User::factory(),
             'status' => $this->faker->randomElement([
                 'pending',
-                'processing',
-                'completed',
+                'shipped',
+                'delivered',
                 'cancelled',
             ]),
-            'total_amount' => $this->faker->randomFloat(2, 50, 5000),
+            'total_price' => $this->faker->randomFloat(2, 50, 5000),
             'shipping_address' => $this->faker->address(),
             'payment_method' => $this->faker->randomElement([
                 'cash',

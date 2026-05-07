@@ -49,7 +49,9 @@ Route::middleware('auth:api')->prefix('auth')->group(function () {
 
 // Protected customer routes
 Route::middleware('auth:api')->group(function () {
+    Route::post('/orders/checkout', [OrderController::class, 'checkout']);
     Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 });
 
 // Protected admin routes
