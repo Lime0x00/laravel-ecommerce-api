@@ -42,7 +42,11 @@ class AuthController extends BaseApiController
         $credentials = $request->validated();
 
         try {
-            $tokenData = $this->authService->login($credentials['email'], $credentials['password']);
+            $tokenData = $this->authService->login(
+                $credentials['email'],
+                $credentials['password'],
+                $credentials['session_id'] ?? null
+            );
 
             return response()->json([
                 'status' => 'success',

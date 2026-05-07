@@ -12,6 +12,7 @@
 
 use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,13 @@ Route::prefix('auth')->group(function () {
 // Public product routes
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+// Cart routes (guest + authenticated)
+Route::post('/cart/{productId}', [CartController::class, 'addItem']);
+Route::put('/cart/{productId}', [CartController::class, 'updateQuantity']);
+Route::delete('/cart/{productId}', [CartController::class, 'removeItem']);
+Route::get('/cart', [CartController::class, 'showCart']);
+Route::delete('/cart', [CartController::class, 'clearCart']);
 
 // Protected admin product routes
 Route::middleware(['auth:api', 'role:admin'])->group(function () {

@@ -16,6 +16,7 @@ class LoginRequest extends BaseApiRequest
         return [
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'session_id' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
