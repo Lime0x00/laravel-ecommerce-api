@@ -3,6 +3,8 @@
 namespace App\Repositories\Contracts;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface ProductRepositoryInterface extends BaseRepositoryInterface
 {
@@ -11,8 +13,11 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
      */
     public function findAvailableProducts(): Collection;
 
-    /**
-     * Get paginated available products with eager loading.
-     */
-    public function getPaginatedAvailableProducts(int $perPage = 15): mixed;
+    public function getPaginatedCatalog(
+        int $perPage = 15,
+        ?string $categorySlug = null,
+        ?string $search = null
+    ): LengthAwarePaginator;
+
+    public function findWithCategory(int $id): ?Model;
 }
