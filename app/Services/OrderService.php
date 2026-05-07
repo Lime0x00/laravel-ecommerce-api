@@ -2,14 +2,19 @@
 
 namespace App\Services;
 
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Order;
+use App\Repositories\Contracts\CartRepositoryInterface;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
     public function __construct(
-        private readonly OrderRepositoryInterface $orderRepository
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly CartRepositoryInterface $cartRepository
     ) {}
 
     /**
@@ -20,6 +25,42 @@ class OrderService
         int $perPage = 15
     ): LengthAwarePaginator {
         return $this->orderRepository->findByUserId($userId, $perPage);
+    }
+
+    public function checkout(int $userId, array $payload): Order
+    {
+        $cart = $this->cartRepository->getCartWithItems($userId, null);
+
+        if (!$cart instanceof Cart || $cart->items->isEmpty()) {
+            throw ValidationException::withMessages([
+                'cart' => ['Cart is empty.'],
+            ]);
+        }
+
+        $totalPrice = (float) $cart->items->sum(function (CartItem $item): float {
+            return (float) $item->unit_price * (int) $item->quantity;
+        });
+
+        $order = $this->orderRepository->createFromCart($userId, $cart, [
+            'shipping_address' => $payload['shipping_address'],
+            'payment_method' => $payload['payment_method'],
+            'total_price' => $totalPrice,
+        ]);
+
+        $this->cartRepository->clearCart($cart);
+
+        return $order;
+    }
+
+    public function getUserOrderById(int $userId, int $orderId): Order
+    {
+        $order = $this->orderRepository->findUserOrderById($userId, $orderId);
+
+        if (!$order instanceof Order) {
+            abort(404, 'Order not found.');
+        }
+
+        return $order;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Contracts;
 
+use App\Models\Cart;
+use App\Models\Order;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface OrderRepositoryInterface extends BaseRepositoryInterface
@@ -14,8 +16,7 @@ interface OrderRepositoryInterface extends BaseRepositoryInterface
         int $perPage = 10
     ): LengthAwarePaginator;
 
-    /**
-     * Create an order from a finalized cart.
-     */
-    public function createFromCart(int $userId, array $data): mixed;
+    public function createFromCart(int $userId, Cart $cart, array $data): Order;
+
+    public function findUserOrderById(int $userId, int $orderId): ?Order;
 }

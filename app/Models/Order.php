@@ -14,9 +14,13 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'status',
-        'total_amount',
+        'total_price',
         'shipping_address',
         'payment_method',
+    ];
+
+    protected $casts = [
+        'total_price' => 'float',
     ];
 
     public function user(): BelongsTo
