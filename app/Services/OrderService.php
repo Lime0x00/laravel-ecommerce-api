@@ -17,7 +17,7 @@ class OrderService
      */
     public function getUserOrderHistory(
         int $userId,
-        int $perPage = 10
+        int $perPage = 15
     ): LengthAwarePaginator {
         return $this->orderRepository->findByUserId($userId, $perPage);
     }
@@ -28,9 +28,9 @@ class OrderService
     public function getAllOrders(): mixed
     {
         return Order::query()
-            ->with(['user', 'items'])
+            ->with(['user', 'items.product'])
             ->latest()
-            ->paginate(10);
+            ->paginate(15);
     }
 
     /**

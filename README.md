@@ -20,58 +20,167 @@ This repository provides a **Zero-Defect Architectural Shell**. It implements th
 
 ---
 
-## 🚀 Environment Readiness
+## 🚀 Installation & Setup
 
-### 1. Developer Setup (Docker First)
-The environment is pre-configured for immediate team collaboration.
+### Prerequisites
+- PHP 8.3+
+- Composer
+- Docker & Docker Compose (recommended)
+- MySQL 8 or PostgreSQL
+- Redis (for caching and queues)
 
+### 1. Clone the Repository
 ```bash
-# Initialize local environment
-cp .env.dev .env
+git clone <repository-url>
+cd laravel-ecommerce-api
+```
 
-# Launch core services
+### 2. Install Dependencies
+```bash
+composer install
+```
+
+### 3. Environment Setup
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your database and other configurations:
+```env
+APP_NAME="Laravel E-Commerce API"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_ecommerce
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+
+JWT_SECRET=
+```
+
+### 4. Generate Application Key
+```bash
+php artisan key:generate
+```
+
+### 5. Generate JWT Secret
+```bash
+php artisan jwt:secret
+```
+
+### 6. Run Migrations
+```bash
+php artisan migrate
+```
+
+### 7. Seed Database (Optional)
+```bash
+php artisan db:seed
+```
+
+### 8. Serve the Application
+```bash
+php artisan serve
+```
+
+The API will be available at `http://localhost:8000`.
+
+### Docker Setup (Alternative)
+```bash
 docker-compose up -d --build
-
-# Generate security keys
-docker-compose exec app php artisan key:generate
-docker-compose exec app php artisan jwt:secret
-docker-compose exec app php artisan migrate --seed
 ```
-
-### 2. QA & Tester Workflow
-The API uses a **Postman-driven contract**. 
-- **Collections:** Located in `postman/collections/`. Includes pre-built JWT injection scripts.
-- **Environments:** Pre-configured in `postman/environments/`.
-- **Validation:** Testers should run the collection against the Docker container (Port 8000).
 
 ---
 
-## 🛠 Design Pattern Implementation
-| Pattern | Implementation File | Purpose |
-| :--- | :--- | :--- |
-| **Repository** | `app/Repositories/` | Decouples Eloquent models from the Service layer. |
-| **Factory** | `app/Factories/` | Polymorphic Payment Gateway instantiation for Stripe/PayPal. |
-| **Observer** | `app/Events/` & `app/Listeners/` | Decouples Order creation from post-checkout side-effects. |
+## 🧪 Testing
+
+### Run Tests
+```bash
+php artisan test
+# or
+vendor/bin/pest
+```
+
+### Code Quality
+```bash
+# Static Analysis
+vendor/bin/phpstan analyze
+
+# Code Formatting
+vendor/bin/pint
+```
 
 ---
 
-## 📂 Project Structure
-```text
-├── app/
-│   ├── Factories/       # Design Pattern: Factory Implementation
-│   ├── Http/
-│   │   ├── Controllers/Api/ # REST Controllers (Purely structural)
-│   │   └── Requests/    # Form Validation logic
-│   ├── Models/          # Eloquent Models (Architectural shells)
-│   ├── Repositories/    # Design Pattern: Repository implementation
-│   └── Services/        # Business Logic Layer
-├── database/
-│   └── migrations/      # Normalized Database Schema
-├── postman/
-│   ├── collections/     # Pre-configured API Tests
-│   └── specs/           # OpenAPI 3.0.3 Source of Truth
-└── tests/               # Pest Test Suite
+## 🔐 API Authentication
+
+This API uses JWT (JSON Web Tokens) for authentication.
+
+### Register
+```bash
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "role": "customer" // optional, defaults to customer
+}
 ```
+
+### Login
+```bash
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+Response includes `access_token`. Include this in Authorization header for protected routes:
+```
+Authorization: Bearer <access_token>
+```
+
+### Refresh Token
+```bash
+POST /api/auth/refresh
+Authorization: Bearer <access_token>
+```
+
+### Get Profile
+```bash
+GET /api/auth/profile
+Authorization: Bearer <access_token>
+```
+
+---
+
+## 📚 API Endpoints
+
+### Public Endpoints
+- `GET /api/products` - List available products (paginated)
+
+### Protected Endpoints (Customer)
+- `GET /api/orders` - User order history (paginated)
+
+### Admin Endpoints
+- `GET /api/admin/orders` - All orders (paginated)
+- `PUT /api/admin/orders/{id}/status` - Update order status
 
 ---
 
@@ -80,13 +189,13 @@ The project emphasizes automated verification using **Pest**.
 
 ```bash
 # Run all tests
-docker-compose exec app php artisan test
+php artisan test
 
 # Run Static Analysis (Larastan)
-docker-compose exec app ./vendor/bin/phpstan analyze
+./vendor/bin/phpstan analyze
 
 # Run Linting (Laravel Pint)
-docker-compose exec app ./vendor/bin/pint
+./vendor/bin/pint
 ```
 
 ## 📖 Key Documentation

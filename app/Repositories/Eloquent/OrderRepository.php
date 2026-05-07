@@ -21,7 +21,7 @@ class OrderRepository extends BaseRepository implements OrderRepositoryInterface
      */
     public function findByUserId(
         int $userId,
-        int $perPage = 10
+        int $perPage = 15
     ): LengthAwarePaginator {
         return $this->model
             ->where('user_id', $userId)
