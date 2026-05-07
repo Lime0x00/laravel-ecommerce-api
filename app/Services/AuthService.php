@@ -22,7 +22,10 @@ class AuthService extends BaseService
         $data['password'] = Hash::make($data['password']);
         $data['role'] = $data['role'] ?? 'customer';
 
-        return $this->userRepository->create($data);
+        /** @var User $user */
+        $user = $this->userRepository->create($data);
+
+        return $user;
     }
 
     /**
@@ -54,7 +57,7 @@ class AuthService extends BaseService
     {
         try {
             // Try to refresh using JWTAuth
-            $token = JWTAuth::refresh(JWTAuth::getToken());
+            $token = JWTAuth::refresh();
         } catch (\Exception) {
             // If refresh fails, get the user from the token and generate a new one
             $user = JWTAuth::parseToken()->authenticate();

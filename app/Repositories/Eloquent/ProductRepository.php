@@ -21,6 +21,16 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
      */
     public function findAvailableProducts(): Collection
     {
-        return new Collection;
+        return $this->model->where('stock', '>', 0)->get();
+    }
+
+    /**
+     * Get paginated available products with eager loading.
+     */
+    public function getPaginatedAvailableProducts(int $perPage = 15): mixed
+    {
+        return $this->model->with('category')
+            ->where('stock', '>', 0)
+            ->paginate($perPage);
     }
 }

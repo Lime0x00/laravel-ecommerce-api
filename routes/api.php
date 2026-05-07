@@ -13,6 +13,7 @@
 use App\Http\Controllers\Api\AdminOrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth routes
@@ -20,6 +21,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 });
+
+// Public product routes
+Route::get('/products', [ProductController::class, 'index']);
 
 // Protected auth routes
 Route::middleware('auth:api')->prefix('auth')->group(function () {
