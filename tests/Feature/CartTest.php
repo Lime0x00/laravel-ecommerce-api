@@ -205,3 +205,50 @@ it('same product merge increases quantity instead of duplicating rows', function
         ->assertJsonPath('data.items.0.quantity', 4)
         ->assertJsonPath('data.total', 80.0);
 });
+
+it('adding same product twice in same cart increments quantity', function () {
+    $product = Product::factory()->create(['price' => 15.00]);
+    $sessionId = 'guest-session-8';
+
+    $this->postJson("/api/cart/{$product->id}", [
+        'quantity' => 1,
+        'session_id' => $sessionId,
+    ])->assertCreated();
+
+    $response = $this->postJson("/api/cart/{$product->id}", [
+        'quantity' => 2,
+        'session_id' => $sessionId,
+    ]);
+
+    $response
+        ->assertCreated()
+        ->assertJsonCount(1, 'data.items')
+        ->assertJsonPath('data.items.0.quantity', 3)
+        ->assertJsonPath('data.total', 45.0);
+});
+
+it('returns validation error for invalid cart quantity', function () {
+    $product = Product::factory()->create();
+
+    $response = $this->postJson("/api/cart/{$product->id}", [
+        'quantity' => 0,
+        'session_id' => 'guest-session-9',
+    ]);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonPath('status', 'error')
+        ->assertJsonPath('message', 'Validation failed.');
+});
+
+it('returns validation error for invalid cart product id', function () {
+    $response = $this->postJson('/api/cart/999999', [
+        'quantity' => 1,
+        'session_id' => 'guest-session-10',
+    ]);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonPath('status', 'error')
+        ->assertJsonPath('message', 'Validation failed.');
+});

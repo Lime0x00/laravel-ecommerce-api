@@ -48,6 +48,17 @@ it('prevents login with wrong password', function () {
         ->assertJsonPath('status', 'error');
 });
 
+it('returns validation error for malformed login payload', function () {
+    $response = $this->postJson('/api/auth/login', [
+        'email' => 'invalid-email',
+    ]);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonPath('status', 'error')
+        ->assertJsonPath('message', 'Validation failed.');
+});
+
 it('allows authenticated user to get profile', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);

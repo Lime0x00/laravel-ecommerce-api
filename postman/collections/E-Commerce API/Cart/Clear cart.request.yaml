@@ -1,0 +1,14 @@
+$kind: http-request
+url: '{{baseUrl}}/cart'
+method: DELETE
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "session_id": "guest-session-qa"
+    }
+examples: ./.resources/View current cart.resources/examples
+order: 2300

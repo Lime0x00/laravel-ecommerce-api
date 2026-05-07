@@ -44,3 +44,21 @@ it('prevents customers from accessing admin routes', function () {
 
     $response->assertForbidden();
 });
+
+it('prevents customer from updating order status', function () {
+    $customer = User::factory()->create([
+        'role' => 'customer',
+    ]);
+    $order = Order::factory()->create([
+        'status' => 'pending',
+    ]);
+    $token = JWTAuth::fromUser($customer);
+
+    $response = $this->putJson("/api/admin/orders/{$order->id}/status", [
+        'status' => 'shipped',
+    ], [
+        'Authorization' => "Bearer {$token}",
+    ]);
+
+    $response->assertForbidden();
+});

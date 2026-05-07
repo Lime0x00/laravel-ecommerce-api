@@ -1,0 +1,17 @@
+$kind: http-request
+url: '{{baseUrl}}/cart/:product_id'
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  product_id: '1'
+body:
+  type: json
+  content: |-
+    {
+      "quantity": 2,
+      "session_id": "guest-session-qa"
+    }
+examples: ./.resources/View current cart.resources/examples
+order: 2100
