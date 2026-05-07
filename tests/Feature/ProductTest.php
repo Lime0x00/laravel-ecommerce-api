@@ -77,6 +77,12 @@ it('shows a single product', function () {
         ->assertJsonPath('data.id', $product->id);
 });
 
+it('returns not found for missing product id', function () {
+    $response = $this->getJson('/api/products/999999');
+
+    $response->assertNotFound();
+});
+
 it('prevents customer from creating, updating, and deleting products', function () {
     $customer = User::factory()->create(['role' => 'customer']);
     $token = JWTAuth::fromUser($customer);
@@ -153,4 +159,22 @@ it('allows admin to create, update, and delete products', function () {
         ->assertJsonPath('success', true);
 
     expect(Product::query()->find($productId))->toBeNull();
+});
+
+it('returns validation error when admin creates product with invalid payload', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $token = JWTAuth::fromUser($admin);
+
+    $response = $this->postJson('/api/products', [
+        'name' => '',
+        'price' => -1,
+        'stock' => -1,
+    ], [
+        'Authorization' => "Bearer {$token}",
+    ]);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonPath('status', 'error')
+        ->assertJsonPath('message', 'Validation failed.');
 });

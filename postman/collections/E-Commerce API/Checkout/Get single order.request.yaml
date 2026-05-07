@@ -1,0 +1,13 @@
+$kind: http-request
+url: '{{baseUrl}}/orders/:order_id'
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  order_id: '1'
+auth:
+  type: bearer
+  credentials:
+    token: '{{bearerToken}}'
+examples: ./.resources/Finalize checkout.resources/examples
+order: 1200

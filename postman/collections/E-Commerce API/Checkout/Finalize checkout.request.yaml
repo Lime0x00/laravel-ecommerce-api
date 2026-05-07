@@ -2,10 +2,15 @@ $kind: http-request
 url: '{{baseUrl}}/orders/checkout'
 method: POST
 headers:
+  Content-Type: application/json
   Accept: application/json
 body:
-  type: text
-  content: ''
+  type: json
+  content: |-
+    {
+      "shipping_address": "123 Main St, Cairo",
+      "payment_method": "visa"
+    }
 auth:
   type: bearer
   credentials:

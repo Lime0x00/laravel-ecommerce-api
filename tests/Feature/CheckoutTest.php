@@ -55,6 +55,23 @@ it('empty cart cannot checkout', function () {
     $response->assertUnprocessable();
 });
 
+it('returns validation error for invalid checkout payload', function () {
+    $user = User::factory()->create();
+    $token = JWTAuth::fromUser($user);
+
+    $response = $this->postJson('/api/orders/checkout', [
+        'shipping_address' => '',
+        'payment_method' => 'bitcoin',
+    ], [
+        'Authorization' => "Bearer {$token}",
+    ]);
+
+    $response
+        ->assertUnprocessable()
+        ->assertJsonPath('status', 'error')
+        ->assertJsonPath('message', 'Validation failed.');
+});
+
 it('order is created correctly', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
