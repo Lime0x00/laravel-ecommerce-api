@@ -13,7 +13,9 @@ class CheckoutRequest extends BaseApiRequest
     {
         return [
             'shipping_address' => ['required', 'string', 'max:500'],
-            'payment_method' => ['required', 'string', 'in:cash,visa,paypal'],
+            'payment_method' => ['required', 'string', 'in:stripe,paypal,cash'],
+            'payment_token' => ['nullable', 'string'],
+            'payment_email' => ['nullable', 'email'],
         ];
     }
 }

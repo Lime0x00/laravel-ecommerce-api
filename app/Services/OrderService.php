@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\OrderPlaced;
+use App\Factories\PaymentGatewayFactory;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -41,13 +43,39 @@ class OrderService
             return (float) $item->unit_price * (int) $item->quantity;
         });
 
+        // Process payment using the configured payment gateway
+        $paymentMethod = $payload['payment_method'] ?? 'stripe';
+        $paymentGateway = PaymentGatewayFactory::make($paymentMethod);
+
+        $paymentSuccessful = $paymentGateway->process(
+            amount: $totalPrice * 100, // Convert to cents
+            params: [
+                'token' => $payload['payment_token'] ?? null,
+                'email' => $payload['payment_email'] ?? null,
+                'description' => "Order payment for user {$userId}",
+                'order_id' => null, // Will be set after order creation
+            ]
+        );
+
+        if (!$paymentSuccessful) {
+            throw ValidationException::withMessages([
+                'payment' => ['Payment processing failed. Please try again.'],
+            ]);
+        }
+
+        // Create order after successful payment
         $order = $this->orderRepository->createFromCart($userId, $cart, [
             'shipping_address' => $payload['shipping_address'],
-            'payment_method' => $payload['payment_method'],
+            'payment_method' => $paymentMethod,
             'total_price' => $totalPrice,
+            'payment_status' => 'completed',
         ]);
 
+        // Clear the cart
         $this->cartRepository->clearCart($cart);
+
+        // Dispatch event to trigger listeners (e.g., send confirmation email)
+        OrderPlaced::dispatch($order);
 
         return $order;
     }
