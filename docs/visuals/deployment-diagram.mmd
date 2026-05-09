@@ -1,0 +1,22 @@
+graph TD
+    subgraph "Docker Infrastructure"
+        subgraph "Public Network"
+            Nginx["Nginx Web Server"]
+        end
+
+        subgraph "Private Application Network"
+            App["PHP-FPM Container"]
+            MySQL[("MySQL 8.0 Database")]
+            Redis[("Redis Cache/Queue")]
+        end
+    end
+
+    %% Flow
+    Client["REST Client / Frontend"] -- "HTTP/8000" --> Nginx
+    Nginx -- "FastCGI" --> App
+    App -- "SQL" --> MySQL
+    App -- "RESP" --> Redis
+
+    %% Volume mapping
+    Codebase["Local Codebase"] -.-> |"Mounted"| App
+    Codebase -.-> |"Mounted"| Nginx

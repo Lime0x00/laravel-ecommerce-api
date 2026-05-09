@@ -16,11 +16,10 @@ class AdminOrderController extends BaseApiController
     {
         $orders = $this->orderService->getAllOrders();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Orders retrieved successfully.',
-            'data' => $orders,
-        ]);
+        return $this->success(
+            data: $orders,
+            message: 'Orders retrieved successfully.'
+        );
     }
 
     public function updateStatus(UpdateOrderStatusRequest $request, int $id): JsonResponse
@@ -30,10 +29,9 @@ class AdminOrderController extends BaseApiController
             status: $request->validated('status')
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order status updated successfully.',
-            'data' => $order,
-        ]);
+        return $this->success(
+            data: $order,
+            message: 'Order status updated successfully.'
+        );
     }
 }

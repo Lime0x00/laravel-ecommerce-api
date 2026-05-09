@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Ctrl as "OrderController"
+    participant Service as "OrderService"
+    participant Factory as "PaymentGatewayFactory"
+    participant Gateway as "StripePaymentGateway"
+    participant CartRepo as "CartRepository"
+    participant OrderRepo as "OrderRepository"
+    participant DB as "Database (Atomic Transaction)"
+    participant Dispatcher as "Laravel Event Dispatcher"
+    participant Listener as "SendOrderConfirmation (ShouldQueue)"
+    participant Queue as "Redis/Database Queue"
+
+    Client->>Ctrl: "POST /api/orders/checkout"
+    Ctrl->>Service: "checkout(userId, payload)"
+    
+    Service->>CartRepo: "getCartWithItems(userId)"
+    CartRepo-->>Service: "Cart Entity"
+    
+    Note right of Service: Factory resolves driver (Stripe)
+    Service->>Factory: "make('stripe')"
+    Factory-->>Service: "StripePaymentGateway Instance"
+    
+    Service->>Gateway: "process(amount, params)"
+    Gateway-->>Service: "Payment Success (true)"
+    
+    rect rgb(240, 240, 240)
+        Note over Service, DB: Atomic Transaction Boundary
+        Service->>OrderRepo: "createFromCart(userId, cart, data)"
+        OrderRepo->>DB: "INSERT INTO orders (payment_id, status: completed)"
+        OrderRepo->>DB: "INSERT INTO order_items (bulk)"
+        DB-->>OrderRepo: "Records Persisted"
+        OrderRepo-->>Service: "Order Entity"
+        
+        Service->>CartRepo: "clearCart(cart)"
+        CartRepo->>DB: "DELETE FROM cart_items"
+    end
+    
+    Service->>Dispatcher: "OrderPlaced::dispatch($order)"
+    Dispatcher->>Listener: "handle(OrderPlaced $event)"
+    Listener->>Queue: "Push Serialized Job (Async Side-Effect)"
+    
+    Service-->>Ctrl: "Order Entity"
+    Ctrl-->>Client: "201 Created (JSON Response)"

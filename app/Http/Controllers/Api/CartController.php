@@ -25,11 +25,11 @@ class CartController extends BaseApiController
             quantity: (int) $request->validated('quantity')
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart item added successfully.',
-            'data' => $cart,
-        ], 201, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $cart,
+            message: 'Cart item added successfully.',
+            code: 201
+        );
     }
 
     public function updateQuantity(CartRequest $request, int $productId): JsonResponse
@@ -43,11 +43,10 @@ class CartController extends BaseApiController
             quantity: (int) $request->validated('quantity')
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart item updated successfully.',
-            'data' => $cart,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $cart,
+            message: 'Cart item updated successfully.'
+        );
     }
 
     public function removeItem(Request $request, int $productId): JsonResponse
@@ -60,11 +59,10 @@ class CartController extends BaseApiController
             productId: $productId
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart item removed successfully.',
-            'data' => $cart,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $cart,
+            message: 'Cart item removed successfully.'
+        );
     }
 
     public function showCart(Request $request): JsonResponse
@@ -76,11 +74,10 @@ class CartController extends BaseApiController
             sessionId: $sessionId
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart retrieved successfully.',
-            'data' => $cart,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $cart,
+            message: 'Cart retrieved successfully.'
+        );
     }
 
     public function clearCart(Request $request): JsonResponse
@@ -92,11 +89,10 @@ class CartController extends BaseApiController
             sessionId: $sessionId
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart cleared successfully.',
-            'data' => $cart,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $cart,
+            message: 'Cart cleared successfully.'
+        );
     }
 
     private function resolveOwner(Request $request): array

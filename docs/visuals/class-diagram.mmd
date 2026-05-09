@@ -1,0 +1,99 @@
+classDiagram
+    %% Presentation Layer
+    class AuthController {
+        -AuthService authService
+        +register(RegisterRequest) JsonResponse
+        +login(LoginRequest) JsonResponse
+    }
+    class ProductController {
+        -ProductService productService
+        +index(ProductCatalogRequest) JsonResponse
+        +show(int id) JsonResponse
+    }
+    class CartController {
+        -CartService cartService
+        +showCart() JsonResponse
+        +addItem(int productId) JsonResponse
+    }
+    class OrderController {
+        -OrderService orderService
+        +checkout(CheckoutRequest) JsonResponse
+        +index(OrderHistoryRequest) JsonResponse
+    }
+    class AdminOrderController {
+        -OrderService orderService
+        +index() JsonResponse
+        +updateStatus(UpdateOrderStatusRequest, int id) JsonResponse
+    }
+
+    %% Application Layer (Services)
+    class AuthService {
+        -UserRepositoryInterface userRepo
+        -CartService cartService
+        +register(array data) User
+        +login(string email, string password, string sessionId) array
+    }
+    class ProductService {
+        -ProductRepositoryInterface productRepo
+        +getCatalog(...) Paginator
+    }
+    class CartService {
+        -CartRepositoryInterface cartRepo
+        -ProductRepositoryInterface productRepo
+        +addItem(...) array
+        +mergeGuestCartIntoUser(...) void
+    }
+    class OrderService {
+        -OrderRepositoryInterface orderRepo
+        -CartRepositoryInterface cartRepo
+        +checkout(int userId, array payload) Order
+    }
+
+    %% Payment Factory Implementation
+    class PaymentGatewayFactory {
+        <<static>>
+        +make(string driver) PaymentGatewayInterface
+    }
+    class PaymentGatewayInterface {
+        <<interface>>
+        +process(float amount, array params) bool
+    }
+    class StripePaymentGateway {
+        +process(float amount, array params) bool
+    }
+
+    %% Event-Driven Side-Effects
+    class EventServiceProvider {
+        -array listen
+    }
+    class OrderPlaced {
+        +Order order
+    }
+    class SendOrderConfirmation {
+        <<ShouldQueue>>
+        +handle(OrderPlaced event) void
+    }
+    class OrderConfirmationMail {
+        +order Order
+        +envelope() Envelope
+        +content() Content
+    }
+
+    %% Relationships
+    OrderController o-- OrderService
+    OrderService o-- OrderRepositoryInterface
+    OrderService o-- CartRepositoryInterface
+    OrderService ..> PaymentGatewayFactory : "delegates payment"
+    PaymentGatewayFactory ..> PaymentGatewayInterface : "creates"
+    PaymentGatewayInterface <|.. StripePaymentGateway : "implements"
+
+    OrderService ..> OrderPlaced : "dispatches"
+    OrderPlaced --o SendOrderConfirmation : "triggers"
+    EventServiceProvider ..> SendOrderConfirmation : "registers"
+    SendOrderConfirmation ..> OrderConfirmationMail : "sends"
+    
+    OrderRepository o-- Order
+    Order "1" -- "*" OrderItem
+    User "1" -- "*" Order
+    User "1" -- "0..1" Cart
+    Category "1" -- "*" Product

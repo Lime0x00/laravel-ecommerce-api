@@ -1,0 +1,32 @@
+flowchart TD
+    %% Request Entry
+    Request([Incoming API Request]) -- "POST /api/orders/checkout" --> Route["api.php Routing"]
+    
+    subgraph "Infrastructure & Security Layers"
+        Route --> ForceJSON["ForceJsonResponse Middleware"]
+        ForceJSON --> Throttle["Throttle Middleware"]
+        Throttle --> JWT["JWT Auth:api Middleware"]
+        JWT --> RBAC["CheckRole:admin/customer Middleware"]
+    end
+    
+    %% Application Logic
+    RBAC --> Validation{"CheckoutRequest Validation"}
+    
+    Validation -- Invalid --> Error["422 Validation Error Response"]
+    Validation -- Valid --> Controller["OrderController::checkout"]
+    
+    Controller --> Service["OrderService::checkout"]
+    
+    subgraph "Business Orchestration"
+        Service --> CartCheck["Validate Cart & Stock"]
+        CartCheck --> Pay["Process Payment via Factory"]
+        Pay --> OrderRepo["OrderRepository::createFromCart"]
+    end
+    
+    OrderRepo --> DB[("Database Transaction")]
+    DB --> Event["Dispatch OrderPlaced Event"]
+    Event --> Response([201 Created Response])
+    
+    %% Error Paths
+    Error --> Client([Client])
+    Pay -- Failure --> Error

@@ -16,10 +16,7 @@ class PaymentGatewayFactory
     public static function make(string $driver): PaymentGatewayInterface
     {
         return match ($driver) {
-            'stripe' => new StripePaymentGateway(),
-            // Future implementations:
-            // 'paypal' => new PayPalPaymentGateway(),
-            // 'square' => new SquarePaymentGateway(),
+            'stripe' => app(StripePaymentGateway::class),
             default => throw new InvalidArgumentException("Driver [{$driver}] not supported."),
         };
     }
