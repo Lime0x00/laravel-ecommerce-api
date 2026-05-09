@@ -22,6 +22,7 @@ response:
     content: |-
       {
         "status": "error",
-        "message": "Unauthenticated."
+        "message": "Invalid credentials",
+        "data": null
       }
 order: 2000

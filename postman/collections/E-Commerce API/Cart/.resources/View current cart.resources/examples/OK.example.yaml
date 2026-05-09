@@ -17,15 +17,28 @@ response:
     content: |-
       {
         "status": "success",
+        "message": "Cart retrieved successfully.",
         "data": {
-          "id": 10,
+          "cart_id": 10,
+          "user_id": null,
+          "session_id": "session-uuid-example",
           "items": [
             {
               "product_id": 1,
-              "product_name": "Wireless Headphones",
               "quantity": 2,
               "unit_price": 99.99,
-              "subtotal": 199.98
+              "subtotal": 199.98,
+              "product": {
+                "id": 1,
+                "name": "Wireless Headphones",
+                "slug": "wireless-headphones",
+                "price": 99.99,
+                "category": {
+                  "id": 2,
+                  "name": "Audio",
+                  "slug": "audio"
+                }
+              }
             }
           ],
           "total": 199.98
