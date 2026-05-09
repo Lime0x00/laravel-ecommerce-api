@@ -24,5 +24,5 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var bool
      */
-    protected $shouldDiscoverEvents = true;
+    protected static $shouldDiscoverEvents = true;
 }

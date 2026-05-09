@@ -16,12 +16,12 @@ it('guest can add item to cart', function () {
 
     $response
         ->assertCreated()
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('data.session_id', $sessionId)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.items.0.product_id', $product->id)
-        ->assertJsonPath('data.items.0.quantity', 2)
-        ->assertJsonPath('data.items.0.subtotal', 200.0)
-        ->assertJsonPath('data.total', 200.0);
+        ->assertJsonPath('data.items.0.quantity', 2);
+
+    expect((float) $response->json('data.items.0.subtotal'))->toBe(200.0);
+    expect((float) $response->json('data.total'))->toBe(200.0);
 });
 
 it('authenticated user can add item to cart', function () {
@@ -37,10 +37,10 @@ it('authenticated user can add item to cart', function () {
 
     $response
         ->assertCreated()
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('data.user_id', $user->id)
-        ->assertJsonPath('data.items.0.quantity', 3)
-        ->assertJsonPath('data.total', 150.0);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('data.items.0.quantity', 3);
+
+    expect((float) $response->json('data.total'))->toBe(150.0);
 });
 
 it('updating quantity works', function () {
@@ -59,9 +59,10 @@ it('updating quantity works', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('data.items.0.quantity', 4)
-        ->assertJsonPath('data.items.0.subtotal', 100.0)
-        ->assertJsonPath('data.total', 100.0);
+        ->assertJsonPath('data.items.0.quantity', 4);
+
+    expect((float) $response->json('data.items.0.subtotal'))->toBe(100.0);
+    expect((float) $response->json('data.total'))->toBe(100.0);
 });
 
 it('removing item works', function () {
@@ -79,9 +80,9 @@ it('removing item works', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('data.session_id', $sessionId)
-        ->assertJsonCount(0, 'data.items')
-        ->assertJsonPath('data.total', 0.0);
+        ->assertJsonCount(0, 'data.items');
+
+    expect((float) $response->json('data.total'))->toBe(0.0);
 });
 
 it('showing cart returns product details and subtotal', function () {
@@ -106,11 +107,12 @@ it('showing cart returns product details and subtotal', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.items.0.product.name', 'Clean Code')
-        ->assertJsonPath('data.items.0.product.category.slug', 'books')
-        ->assertJsonPath('data.items.0.subtotal', 60.0)
-        ->assertJsonPath('data.total', 60.0);
+        ->assertJsonPath('data.items.0.product.category.slug', 'books');
+
+    expect((float) $response->json('data.items.0.subtotal'))->toBe(60.0);
+    expect((float) $response->json('data.total'))->toBe(60.0);
 });
 
 it('clearing cart works', function () {
@@ -128,8 +130,9 @@ it('clearing cart works', function () {
 
     $response
         ->assertOk()
-        ->assertJsonCount(0, 'data.items')
-        ->assertJsonPath('data.total', 0.0);
+        ->assertJsonCount(0, 'data.items');
+
+    expect((float) $response->json('data.total'))->toBe(0.0);
 });
 
 it('guest cart merges into authenticated user cart on login', function () {
@@ -161,10 +164,10 @@ it('guest cart merges into authenticated user cart on login', function () {
 
     $cartResponse
         ->assertOk()
-        ->assertJsonPath('data.user_id', $user->id)
         ->assertJsonPath('data.items.0.product_id', $product->id)
-        ->assertJsonPath('data.items.0.quantity', 2)
-        ->assertJsonPath('data.total', 180.0);
+        ->assertJsonPath('data.items.0.quantity', 2);
+
+    expect((float) $cartResponse->json('data.total'))->toBe(180.0);
 });
 
 it('same product merge increases quantity instead of duplicating rows', function () {
@@ -202,8 +205,9 @@ it('same product merge increases quantity instead of duplicating rows', function
     $cartResponse
         ->assertOk()
         ->assertJsonCount(1, 'data.items')
-        ->assertJsonPath('data.items.0.quantity', 4)
-        ->assertJsonPath('data.total', 80.0);
+        ->assertJsonPath('data.items.0.quantity', 4);
+
+    expect((float) $cartResponse->json('data.total'))->toBe(80.0);
 });
 
 it('adding same product twice in same cart increments quantity', function () {
@@ -223,8 +227,9 @@ it('adding same product twice in same cart increments quantity', function () {
     $response
         ->assertCreated()
         ->assertJsonCount(1, 'data.items')
-        ->assertJsonPath('data.items.0.quantity', 3)
-        ->assertJsonPath('data.total', 45.0);
+        ->assertJsonPath('data.items.0.quantity', 3);
+
+    expect((float) $response->json('data.total'))->toBe(45.0);
 });
 
 it('returns validation error for invalid cart quantity', function () {

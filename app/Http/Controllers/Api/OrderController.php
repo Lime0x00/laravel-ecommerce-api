@@ -20,11 +20,11 @@ class OrderController extends BaseApiController
             payload: $request->validated()
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Checkout completed successfully.',
-            'data' => $order,
-        ], 201, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $order,
+            message: 'Checkout completed successfully.',
+            code: 201
+        );
     }
 
     /**
@@ -37,11 +37,10 @@ class OrderController extends BaseApiController
             perPage: $request->perPage()
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Orders retrieved successfully.',
-            'data' => $orders,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $orders,
+            message: 'Orders retrieved successfully.'
+        );
     }
 
     public function show(OrderHistoryRequest $request, int $id): JsonResponse
@@ -51,10 +50,9 @@ class OrderController extends BaseApiController
             orderId: $id
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order retrieved successfully.',
-            'data' => $order,
-        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
+        return $this->success(
+            data: $order,
+            message: 'Order retrieved successfully.'
+        );
     }
 }

@@ -12,6 +12,7 @@ request:
         "name": "John Doe",
         "email": "john@example.com",
         "password": "secret123456",
+        "password_confirmation": "different123456",
         "role": "customer"
       }
 response:
@@ -24,10 +25,10 @@ response:
     content: |-
       {
         "status": "error",
-        "message": "The given data was invalid.",
+        "message": "Validation failed.",
         "data": {
-          "email": [
-            "The email has already been taken."
+          "password": [
+            "The password field confirmation does not match."
           ]
         }
       }

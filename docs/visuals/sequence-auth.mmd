@@ -1,0 +1,23 @@
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Routes as Routes /api.php
+    participant AuthCtrl as AuthController
+    participant AuthService as AuthService
+    participant UserRepo as UserRepository
+    participant CartService as CartService
+    participant JWT as JWT Provider
+
+    Client->>Routes: POST /api/auth/login (email, password, sessionId?)
+    Routes->>AuthCtrl: login(request)
+    AuthCtrl->>AuthService: login(email, password, sessionId)
+    AuthService->>UserRepo: findByEmail(email)
+    UserRepo-->>AuthService: user object
+    AuthService->>AuthService: verify password (Hash::check)
+    AuthService->>JWT: fromUser(user)
+    JWT-->>AuthService: token
+    AuthService->>CartService: mergeGuestCartIntoUser(sessionId, userId)
+    AuthService-->>AuthCtrl: {access_token, token_type, expires_in}
+    AuthCtrl-->>Client: 200 OK (token data)
+
+    Note over Client, JWT: JWT Authentication & Cart Synchronization Pipeline

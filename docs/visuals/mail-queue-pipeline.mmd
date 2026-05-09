@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant OS as "OrderService"
+    participant Dispatcher as "Laravel Event Dispatcher"
+    participant Listener as "SendOrderConfirmation (Listener)"
+    participant Queue as "Redis/Database Queue"
+    participant Worker as "Background Queue Worker"
+    participant Mail as "SMTP/Mail Driver"
+
+    Note over OS, Mail: Side-Effect Execution Pipeline (Event-Driven)
+
+    OS->>Dispatcher: "dispatch(new OrderPlaced($order))"
+    Dispatcher->>Listener: "handle(OrderPlaced $event)"
+    Listener->>Queue: "Push Serialized Job (ShouldQueue)"
+    Dispatcher-->>OS: "Return Control (Immediate)"
+
+    Note over Queue, Worker: Asynchronous Boundary
+
+    Worker->>Queue: "Poll for Job"
+    Queue-->>Worker: "Job Data (OrderConfirmationMail)"
+    Worker->>Mail: "Render & Send Email"
+    Mail-->>Worker: "SMTP 250 OK"
+    Worker->>Queue: "Delete Job"

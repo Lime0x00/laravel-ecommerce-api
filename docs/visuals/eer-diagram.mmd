@@ -1,0 +1,67 @@
+erDiagram
+    users ||--o{ orders : "places"
+    users ||--o| carts : "owns"
+    categories ||--o{ products : "contains"
+    carts ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "in"
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "in"
+
+    users {
+        bigint id PK
+        string name
+        string email
+        string password
+        string role
+        timestamp created_at
+    }
+
+    categories {
+        bigint id PK
+        string name
+        string slug
+        text description
+    }
+
+    products {
+        bigint id PK
+        bigint category_id FK
+        string name
+        string slug
+        text description
+        decimal price "10,2"
+        integer stock
+    }
+
+    carts {
+        bigint id PK
+        bigint user_id FK "nullable"
+        string session_id "nullable"
+    }
+
+    cart_items {
+        bigint id PK
+        bigint cart_id FK
+        bigint product_id FK
+        integer quantity
+        decimal unit_price "10,2"
+    }
+
+    orders {
+        bigint id PK
+        bigint user_id FK
+        decimal total_price "10,2"
+        string status
+        string payment_method
+        string payment_id "nullable"
+        string payment_status
+        text shipping_address
+    }
+
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint product_id FK
+        integer quantity
+        decimal unit_price "10,2"
+    }

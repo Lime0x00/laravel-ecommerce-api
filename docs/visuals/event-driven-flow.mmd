@@ -1,0 +1,18 @@
+sequenceDiagram
+    participant OS as OrderService
+    participant Event as OrderPlaced (Event)
+    participant Dispatcher as Laravel Event Dispatcher
+    participant Listener as SendOrderConfirmation (Listener)
+    participant Mailable as OrderConfirmationMail (Mailable)
+    participant Mail as Mail Server / SMTP
+
+    OS->>OS: Finalize DB Transaction
+    OS->>Dispatcher: dispatch(new OrderPlaced($order))
+    Dispatcher->>Event: Initialize Instance
+    Dispatcher->>Listener: handle(OrderPlaced $event)
+    
+    Note over Listener, Mail: Asynchronous Boundary (Queued)
+    
+    Listener->>Mailable: new OrderConfirmationMail($order)
+    Listener->>Mail: Mail::send()
+    Mail-->>Listener: SMTP Accepted

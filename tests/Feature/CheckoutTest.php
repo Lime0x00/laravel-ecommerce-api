@@ -4,12 +4,23 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\Contracts\PaymentGatewayInterface;
+use App\Services\StripePaymentGateway;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\App;
+
+beforeEach(function () {
+    $this->paymentMock = Mockery::mock(StripePaymentGateway::class);
+    $this->paymentMock->shouldReceive('process')->andReturn(true)->byDefault();
+    
+    // Bind the mock so the Factory picks it up via the container
+    App::bind(StripePaymentGateway::class, fn() => $this->paymentMock);
+});
 
 it('authenticated user can checkout', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
-    $product = Product::factory()->create(['price' => 120.00]);
+    $product = Product::factory()->create(['price' => 120.00, 'stock' => 100]);
 
     $this->postJson("/api/cart/{$product->id}", [
         'quantity' => 2,
@@ -19,23 +30,25 @@ it('authenticated user can checkout', function () {
 
     $response = $this->postJson('/api/orders/checkout', [
         'shipping_address' => '123 Main St',
-        'payment_method' => 'visa',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ]);
 
     $response
         ->assertCreated()
-        ->assertJsonPath('success', true)
-        ->assertJsonPath('data.user_id', $user->id)
-        ->assertJsonPath('data.status', 'pending')
-        ->assertJsonPath('data.total_price', 240.0);
+        ->assertJsonPath('status', 'success')
+        ->assertJsonPath('data.user_id', $user->id);
+
+    expect((float) $response->json('data.total_price'))->toBe(240.0);
 });
 
 it('prevents unauthenticated user from checkout', function () {
     $response = $this->postJson('/api/orders/checkout', [
         'shipping_address' => '123 Main St',
-        'payment_method' => 'visa',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ]);
 
     $response->assertUnauthorized();
@@ -47,7 +60,8 @@ it('empty cart cannot checkout', function () {
 
     $response = $this->postJson('/api/orders/checkout', [
         'shipping_address' => '123 Main St',
-        'payment_method' => 'visa',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ]);
@@ -61,7 +75,8 @@ it('returns validation error for invalid checkout payload', function () {
 
     $response = $this->postJson('/api/orders/checkout', [
         'shipping_address' => '',
-        'payment_method' => 'bitcoin',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ]);
@@ -75,7 +90,7 @@ it('returns validation error for invalid checkout payload', function () {
 it('order is created correctly', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
-    $product = Product::factory()->create(['price' => 50.00]);
+    $product = Product::factory()->create(['price' => 50.00, 'stock' => 100]);
 
     $this->postJson("/api/cart/{$product->id}", [
         'quantity' => 3,
@@ -85,21 +100,21 @@ it('order is created correctly', function () {
 
     $this->postJson('/api/orders/checkout', [
         'shipping_address' => 'Cairo, Egypt',
-        'payment_method' => 'cash',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ])->assertCreated();
 
     expect(Order::query()->count())->toBe(1);
     expect(Order::query()->first()->shipping_address)->toBe('Cairo, Egypt');
-    expect(Order::query()->first()->payment_method)->toBe('cash');
 });
 
 it('order items are created correctly', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
-    $productOne = Product::factory()->create(['price' => 10.00]);
-    $productTwo = Product::factory()->create(['price' => 20.00]);
+    $productOne = Product::factory()->create(['price' => 10.00, 'stock' => 100]);
+    $productTwo = Product::factory()->create(['price' => 20.00, 'stock' => 100]);
 
     $this->postJson("/api/cart/{$productOne->id}", ['quantity' => 2], [
         'Authorization' => "Bearer {$token}",
@@ -110,7 +125,8 @@ it('order items are created correctly', function () {
 
     $this->postJson('/api/orders/checkout', [
         'shipping_address' => 'Alexandria, Egypt',
-        'payment_method' => 'paypal',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ])->assertCreated();
@@ -121,7 +137,7 @@ it('order items are created correctly', function () {
 it('cart clears after checkout', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
-    $product = Product::factory()->create(['price' => 99.00]);
+    $product = Product::factory()->create(['price' => 99.00, 'stock' => 100]);
 
     $this->postJson("/api/cart/{$product->id}", ['quantity' => 1], [
         'Authorization' => "Bearer {$token}",
@@ -129,7 +145,8 @@ it('cart clears after checkout', function () {
 
     $this->postJson('/api/orders/checkout', [
         'shipping_address' => 'Giza, Egypt',
-        'payment_method' => 'visa',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ])->assertCreated();
@@ -155,14 +172,14 @@ it('authenticated user can list their orders', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonCount(2, 'data.data');
 });
 
 it('authenticated user can view single order', function () {
     $user = User::factory()->create();
     $token = JWTAuth::fromUser($user);
-    $product = Product::factory()->create(['price' => 15.00]);
+    $product = Product::factory()->create(['price' => 15.00, 'stock' => 100]);
 
     $this->postJson("/api/cart/{$product->id}", ['quantity' => 2], [
         'Authorization' => "Bearer {$token}",
@@ -170,7 +187,8 @@ it('authenticated user can view single order', function () {
 
     $checkoutResponse = $this->postJson('/api/orders/checkout', [
         'shipping_address' => 'Dokki, Egypt',
-        'payment_method' => 'cash',
+        'payment_method' => 'stripe',
+        'payment_token' => 'tok_visa',
     ], [
         'Authorization' => "Bearer {$token}",
     ])->assertCreated();

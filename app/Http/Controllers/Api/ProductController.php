@@ -26,54 +26,50 @@ class ProductController extends BaseApiController
             search: $search
         );
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Products retrieved successfully.',
-            'data' => $products,
-        ]);
+        return $this->success(
+            data: $products,
+            message: 'Products retrieved successfully.'
+        );
     }
 
     public function show(int $id): JsonResponse
     {
         $product = $this->productService->findById($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product retrieved successfully.',
-            'data' => $product,
-        ]);
+        return $this->success(
+            data: $product,
+            message: 'Product retrieved successfully.'
+        );
     }
 
     public function store(ProductStoreRequest $request): JsonResponse
     {
         $product = $this->productService->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product created successfully.',
-            'data' => $product->load('category'),
-        ], 201);
+        return $this->success(
+            data: $product->load('category'),
+            message: 'Product created successfully.',
+            code: 201
+        );
     }
 
     public function update(ProductUpdateRequest $request, int $id): JsonResponse
     {
         $product = $this->productService->update($id, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully.',
-            'data' => $product,
-        ]);
+        return $this->success(
+            data: $product,
+            message: 'Product updated successfully.'
+        );
     }
 
     public function destroy(int $id): JsonResponse
     {
         $this->productService->delete($id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product deleted successfully.',
-            'data' => null,
-        ]);
+        return $this->success(
+            data: null,
+            message: 'Product deleted successfully.'
+        );
     }
 }

@@ -24,7 +24,7 @@ it('allows admin to update order status', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.status', 'completed');
 
     expect($order->fresh()->status)->toBe('completed');

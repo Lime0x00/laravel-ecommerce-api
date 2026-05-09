@@ -12,7 +12,7 @@ it('lists products with pagination', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonCount(10, 'data.data');
 });
 
@@ -39,7 +39,7 @@ it('filters products by category slug', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonCount(3, 'data.data');
 });
 
@@ -61,7 +61,7 @@ it('searches products by name', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonCount(1, 'data.data')
         ->assertJsonPath('data.data.0.name', 'Gaming Laptop');
 });
@@ -73,7 +73,7 @@ it('shows a single product', function () {
 
     $response
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.id', $product->id);
 });
 
@@ -133,7 +133,7 @@ it('allows admin to create, update, and delete products', function () {
 
     $createResponse
         ->assertCreated()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.name', 'Pro Keyboard');
 
     $productId = (int) $createResponse->json('data.id');
@@ -147,7 +147,7 @@ it('allows admin to create, update, and delete products', function () {
 
     $updateResponse
         ->assertOk()
-        ->assertJsonPath('success', true)
+        ->assertJsonPath('status', 'success')
         ->assertJsonPath('data.name', 'Pro Keyboard X');
 
     $deleteResponse = $this->deleteJson("/api/products/{$productId}", [], [
@@ -156,7 +156,7 @@ it('allows admin to create, update, and delete products', function () {
 
     $deleteResponse
         ->assertOk()
-        ->assertJsonPath('success', true);
+        ->assertJsonPath('status', 'success');
 
     expect(Product::query()->find($productId))->toBeNull();
 });

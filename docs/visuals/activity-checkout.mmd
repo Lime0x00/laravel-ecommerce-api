@@ -1,0 +1,30 @@
+flowchart TD
+    Start([Start]) --> Browse["Browse Products"]
+    Browse --> Select["Select Product"]
+    Select --> AddCart["Add to Cart"]
+    AddCart --> ViewCart["View Cart"]
+    ViewCart --> Checkout{Checkout?}
+    
+    Checkout -- Yes --> Auth{Authenticated?}
+    Auth -- No --> Login["Login / Register"]
+    Login --> Auth
+    
+    Auth -- Yes --> Shipping["Provide Shipping & Payment Info"]
+    Shipping --> Validate{Form Validation}
+    
+    Validate -- Valid --> Stock{"Atomic Stock Check"}
+    Validate -- Invalid --> Error["Show Validation Error"]
+    
+    Stock -- Yes --> Pay["Process Payment (Stripe/Factory)"]
+    Stock -- No --> StockError["Show Out of Stock Error"]
+    
+    Pay -- Success --> Create["Create Order & Decrement Stock"]
+    Pay -- Failure --> PayError["Show Payment Failure"]
+    
+    Create --> Clear["Clear Shopping Cart"]
+    Clear --> Notify["Dispatch OrderPlaced Event"]
+    Notify --> End([Order Confirmed])
+    
+    Error --> Shipping
+    PayError --> Shipping
+    StockError --> ViewCart

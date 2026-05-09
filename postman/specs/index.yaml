@@ -6,16 +6,36 @@ info:
     Strict headless REST API for an E-Commerce platform.
     This specification follows senior-grade engineering standards for pagination, 
     relational data, and automated security parsing.
+    
+    NOTE: All responses currently utilize a standardized envelope:
+    { "status": "success", "message": "...", "data": { ... } }
   x-postman-event:
     - listen: test
       script:
         type: text/javascript
         exec:
           - 'const response = pm.response.json();'
+          - ''
+          - '// 1. Validate JSON Envelope'
+          - "pm.test('Response has standard status field', () => {"
+          - "    pm.expect(response).to.have.property('status');"
+          - "    pm.expect(['success', 'error']).to.include(response.status);"
+          - '});'
+          - ''
+          - "pm.test('Response has data field', () => {"
+          - "    pm.expect(response).to.have.property('data');"
+          - '});'
+          - ''
+          - '// 2. Automate JWT Token extraction'
           - 'if (response.data && response.data.access_token) {'
           - "    pm.environment.set('jwt_token', response.data.access_token);"
-          - "    console.log('JWT Token automated successfully.');"
+          - "    console.log('JWT Token updated in environment.');"
           - '}'
+          - ''
+          - '// 3. Validate HTTP Status'
+          - "pm.test('Status code is 2xx', () => {"
+          - '    pm.response.to.be.success;'
+          - '});'
 
 servers:
   - url: '{{baseUrl}}'
@@ -27,7 +47,7 @@ tags:
   - name: Catalog
     description: Product discovery and category browsing.
   - name: Cart
-    description: Managing shopping shopping items.
+    description: Managing shopping items.
   - name: Checkout
     description: Order processing and cart conversion.
   - name: Orders
@@ -51,7 +71,7 @@ paths:
           description: Created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/SuccessResponse' }
+              schema: { $ref: '#/components/schemas/UserResponse' }
               example:
                 status: success
                 message: User registered successfully.
@@ -101,12 +121,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/LoginResponse' }
-              example:
-                status: success
-                data:
-                  access_token: 'your-jwt-token-here'
-                  token_type: bearer
-                  expires_in: 3600
         '401': { $ref: '#/components/responses/Unauthorized' }
         '500': { $ref: '#/components/responses/ServerError' }
 
@@ -122,14 +136,6 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/UserResponse' }
-              example:
-                status: success
-                data:
-                  id: 1
-                  name: John Doe
-                  email: john@example.com
-                  role: customer
-                  created_at: '2026-05-02T14:00:00Z'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '500': { $ref: '#/components/responses/ServerError' }
 
@@ -145,6 +151,9 @@ paths:
         - name: search
           in: query
           schema: { $ref: '#/components/schemas/SearchString' }
+        - name: category
+          in: query
+          schema: { type: string, example: 'electronics' }
       responses:
         '200':
           description: OK
@@ -153,18 +162,97 @@ paths:
               schema: { $ref: '#/components/schemas/ProductListResponse' }
               example:
                 status: success
+                message: Products retrieved successfully.
                 data:
-                  - id: 1
-                    name: 'Wireless Headphones'
-                    slug: 'wireless-headphones'
-                    price: 99.99
-                    stock: 50
-                meta:
                   current_page: 1
-                  last_page: 5
-                  per_page: 15
-                  total: 75
+                  data:
+                    - id: 39
+                      category_id: 4
+                      name: 'Headphones'
+                      slug: 'headphones-pro'
+                      price: "41.76"
+                      stock: 89
+                      category:
+                        id: 4
+                        name: 'Audio'
+                        slug: 'audio'
+                  total: 50
         '500': { $ref: '#/components/responses/ServerError' }
+    post:
+      summary: Create new product (Admin)
+      operationId: createProduct
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductCreateRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /products/{id}:
+    get:
+      summary: Get single product details
+      operationId: getProduct
+      tags: [Catalog]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      summary: Update product (Admin)
+      operationId: updateProduct
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductUpdateRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProductResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      summary: Delete product (Admin)
+      operationId: deleteProduct
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 
   /cart:
     get:
@@ -179,24 +267,31 @@ paths:
               schema: { $ref: '#/components/schemas/CartResponse' }
               example:
                 status: success
+                message: 'Cart retrieved successfully.'
                 data:
-                  id: 10
-                  items:
-                    - product_id: 1
-                      product_name: 'Wireless Headphones'
-                      quantity: 2
-                      unit_price: 99.99
-                      subtotal: 199.98
-                  total: 199.98
+                  cart_id: 10
+                  items: []
+                  total: 0.0
+        '500': { $ref: '#/components/responses/ServerError' }
+    delete:
+      summary: Clear current cart
+      operationId: clearCart
+      tags: [Cart]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
         '500': { $ref: '#/components/responses/ServerError' }
 
-  /cart/{product_id}:
+  /cart/{productId}:
     post:
       summary: Add to cart
       operationId: addToCart
       tags: [Cart]
       parameters:
-        - name: product_id
+        - name: productId
           in: path
           required: true
           schema: { $ref: '#/components/schemas/ResourceId' }
@@ -205,17 +300,95 @@ paths:
           application/json:
             schema: { $ref: '#/components/schemas/QuantityRequest' }
       responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+              example:
+                status: success
+                message: 'Cart item added successfully.'
+                data:
+                  cart_id: 10
+                  items:
+                    - product_id: 39
+                      quantity: 1
+                      unit_price: 41.76
+                      subtotal: 41.76
+                      product: { id: 39, name: 'Headphones', price: 41.76 }
+                  total: 41.76
+        '422': { $ref: '#/components/responses/ValidationError' }
+    put:
+      summary: Update cart item quantity
+      operationId: updateCartQuantity
+      tags: [Cart]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuantityRequest' }
+      responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/SuccessResponse' }
-              example:
-                status: success
-                message: 'Cart updated.'
-                data: {}
-        '422': { $ref: '#/components/responses/ValidationError' }
-        '500': { $ref: '#/components/responses/ServerError' }
+              schema: { $ref: '#/components/schemas/CartResponse' }
+    delete:
+      summary: Remove item from cart
+      operationId: removeFromCart
+      tags: [Cart]
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CartResponse' }
+
+  /orders:
+    get:
+      summary: List user order history
+      operationId: getOrders
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { $ref: '#/components/schemas/PageNumber' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderListResponse' }
+
+  /orders/{id}:
+    get:
+      summary: Get single order details
+      operationId: getOrder
+      tags: [Orders]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /orders/checkout:
     post:
@@ -223,25 +396,65 @@ paths:
       operationId: checkout
       tags: [Checkout]
       security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckoutRequest' }
       responses:
         '201':
           description: Created
           content:
             application/json:
               schema: { $ref: '#/components/schemas/OrderResponse' }
-              example:
-                status: success
-                data:
-                  id: 5001
-                  total_amount: 199.98
-                  status: pending
-                  items:
-                    - product_name: 'Wireless Headphones'
-                      quantity: 2
-                      price: 99.99
-                  created_at: '2026-05-02T14:00:00Z'
         '422': { $ref: '#/components/responses/ValidationError' }
-        '500': { $ref: '#/components/responses/ServerError' }
+
+  /admin/orders:
+    get:
+      summary: List all system orders (Admin)
+      operationId: getAdminOrders
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: page
+          in: query
+          schema: { $ref: '#/components/schemas/PageNumber' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderListResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/orders/{id}/status:
+    put:
+      summary: Update order status (Admin)
+      operationId: updateOrderStatus
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/ResourceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/OrderStatus' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrderResponse' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
 
 components:
   securitySchemes:
@@ -282,17 +495,12 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
           example:
             status: error
-            message: 'The given data was invalid.'
-            data:
-              email: ['The email has already been taken.']
+            message: 'Validation failed.'
     ServerError:
       description: Server Error
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
-          example:
-            status: error
-            message: 'An unexpected error occurred.'
 
   schemas:
     ResourceId: { type: integer, minimum: 1, example: 1 }
@@ -305,7 +513,8 @@ components:
     RoleString: { type: string, enum: [customer, admin], example: 'customer' }
     TokenString: { type: string, example: 'your-jwt-token-here' }
     TimestampString: { type: string, format: date-time, example: '2026-05-02T14:00:00Z' }
-    PriceAmount: { type: number, example: 99.99 }
+    PriceAmount: { type: string, example: "99.99" }
+    CurrencyValue: { type: number, example: 99.99 }
     QuantityValue: { type: integer, minimum: 1, example: 1 }
     GenericName: { type: string, example: 'Wireless Headphones' }
     GenericSlug: { type: string, example: 'wireless-headphones' }
@@ -318,14 +527,22 @@ components:
         last_page: { type: integer, example: 5 }
         per_page: { type: integer, example: 15 }
         total: { type: integer, example: 75 }
+        first_page_url: { type: string, example: "http://localhost/api/products?page=1" }
+        last_page_url: { type: string, example: "http://localhost/api/products?page=5" }
+        next_page_url: { type: string, nullable: true, example: "http://localhost/api/products?page=2" }
+        prev_page_url: { type: string, nullable: true }
+        path: { type: string, example: "http://localhost/api/products" }
+        from: { type: integer, example: 1 }
+        to: { type: integer, example: 15 }
 
     RegisterRequest:
       type: object
-      required: [name, email, password]
+      required: [name, email, password, password_confirmation]
       properties:
         name: { $ref: '#/components/schemas/GenericName' }
         email: { $ref: '#/components/schemas/EmailString' }
         password: { $ref: '#/components/schemas/PasswordString' }
+        password_confirmation: { $ref: '#/components/schemas/PasswordString' }
         role: { $ref: '#/components/schemas/RoleString' }
 
     LoginRequest:
@@ -334,6 +551,7 @@ components:
       properties:
         email: { $ref: '#/components/schemas/EmailString' }
         password: { $ref: '#/components/schemas/PasswordString' }
+        session_id: { type: string, nullable: true }
 
     LoginData:
       type: object
@@ -363,14 +581,24 @@ components:
         status: { $ref: '#/components/schemas/StatusString' }
         data: { $ref: '#/components/schemas/UserData' }
 
-    Product:
+    Category:
       type: object
       properties:
         id: { $ref: '#/components/schemas/ResourceId' }
         name: { $ref: '#/components/schemas/GenericName' }
         slug: { $ref: '#/components/schemas/GenericSlug' }
+
+    Product:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        category_id: { $ref: '#/components/schemas/ResourceId' }
+        name: { $ref: '#/components/schemas/GenericName' }
+        slug: { $ref: '#/components/schemas/GenericSlug' }
+        description: { type: string }
         price: { $ref: '#/components/schemas/PriceAmount' }
         stock: { type: integer, example: 50 }
+        category: { $ref: '#/components/schemas/Category' }
 
     ProductCollection:
       type: array
@@ -380,17 +608,65 @@ components:
       type: object
       properties:
         status: { $ref: '#/components/schemas/StatusString' }
-        data: { $ref: '#/components/schemas/ProductCollection' }
-        meta: { $ref: '#/components/schemas/PaginationMeta' }
+        message: { $ref: '#/components/schemas/MessageString' }
+        data:
+          type: object
+          properties:
+            current_page: { type: integer, example: 1 }
+            data: { $ref: '#/components/schemas/ProductCollection' }
+            first_page_url: { type: string, example: "http://localhost/api/products?page=1" }
+            from: { type: integer, example: 1 }
+            last_page: { type: integer, example: 5 }
+            last_page_url: { type: string, example: "http://localhost/api/products?page=5" }
+            next_page_url: { type: string, nullable: true, example: "http://localhost/api/products?page=2" }
+            path: { type: string, example: "http://localhost/api/products" }
+            per_page: { type: integer, example: 15 }
+            prev_page_url: { type: string, nullable: true }
+            to: { type: integer, example: 15 }
+            total: { type: integer, example: 75 }
+
+    ProductResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
+        data: { $ref: '#/components/schemas/Product' }
+
+    ProductCreateRequest:
+      type: object
+      required: [name, price, stock, category_id]
+      properties:
+        name: { type: string }
+        price: { type: number }
+        stock: { type: integer }
+        category_id: { type: integer }
+        description: { type: string }
+
+    ProductUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        price: { type: number }
+        stock: { type: integer }
+        description: { type: string }
+
+    CartProduct:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/ResourceId' }
+        name: { $ref: '#/components/schemas/GenericName' }
+        slug: { $ref: '#/components/schemas/GenericSlug' }
+        price: { $ref: '#/components/schemas/CurrencyValue' }
+        category: { $ref: '#/components/schemas/Category' }
 
     CartItem:
       type: object
       properties:
         product_id: { $ref: '#/components/schemas/ResourceId' }
-        product_name: { $ref: '#/components/schemas/GenericName' }
         quantity: { $ref: '#/components/schemas/QuantityValue' }
-        unit_price: { $ref: '#/components/schemas/PriceAmount' }
-        subtotal: { $ref: '#/components/schemas/PriceAmount' }
+        unit_price: { $ref: '#/components/schemas/CurrencyValue' }
+        subtotal: { $ref: '#/components/schemas/CurrencyValue' }
+        product: { $ref: '#/components/schemas/CartProduct' }
 
     CartItemCollection:
       type: array
@@ -399,14 +675,15 @@ components:
     CartData:
       type: object
       properties:
-        id: { $ref: '#/components/schemas/ResourceId' }
+        cart_id: { type: integer, nullable: true, example: 10 }
         items: { $ref: '#/components/schemas/CartItemCollection' }
-        total: { $ref: '#/components/schemas/PriceAmount' }
+        total: { $ref: '#/components/schemas/CurrencyValue' }
 
     CartResponse:
       type: object
       properties:
         status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
         data: { $ref: '#/components/schemas/CartData' }
 
     QuantityRequest:
@@ -418,9 +695,10 @@ components:
     OrderItem:
       type: object
       properties:
-        product_name: { $ref: '#/components/schemas/GenericName' }
+        product_id: { $ref: '#/components/schemas/ResourceId' }
         quantity: { $ref: '#/components/schemas/QuantityValue' }
-        price: { $ref: '#/components/schemas/PriceAmount' }
+        unit_price: { $ref: '#/components/schemas/CurrencyValue' }
+        product: { $ref: '#/components/schemas/Product' }
 
     OrderItemCollection:
       type: array
@@ -430,16 +708,53 @@ components:
       type: object
       properties:
         id: { $ref: '#/components/schemas/ResourceId' }
-        total_amount: { $ref: '#/components/schemas/PriceAmount' }
+        user_id: { $ref: '#/components/schemas/ResourceId' }
+        total_price: { $ref: '#/components/schemas/CurrencyValue' }
         status: { $ref: '#/components/schemas/OrderStatus' }
+        shipping_address: { type: string, example: "123 Tech Lane" }
+        payment_method: { type: string, example: "stripe" }
+        payment_id: { type: string, nullable: true, example: "ch_123" }
+        payment_status: { type: string, example: "completed" }
         items: { $ref: '#/components/schemas/OrderItemCollection' }
         created_at: { $ref: '#/components/schemas/TimestampString' }
+        user: { $ref: '#/components/schemas/UserData' }
 
     OrderResponse:
       type: object
       properties:
         status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
         data: { $ref: '#/components/schemas/OrderData' }
+
+    OrderListResponse:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/StatusString' }
+        message: { $ref: '#/components/schemas/MessageString' }
+        data:
+          type: object
+          properties:
+            current_page: { type: integer, example: 1 }
+            data: { type: array, items: { $ref: '#/components/schemas/OrderData' } }
+            first_page_url: { type: string, example: "http://localhost/api/orders?page=1" }
+            from: { type: integer, example: 1 }
+            last_page: { type: integer, example: 5 }
+            last_page_url: { type: string, example: "http://localhost/api/orders?page=5" }
+            next_page_url: { type: string, nullable: true }
+            path: { type: string, example: "http://localhost/api/orders" }
+            per_page: { type: integer, example: 15 }
+            prev_page_url: { type: string, nullable: true }
+            to: { type: integer, example: 15 }
+            total: { type: integer, example: 75 }
+
+    CheckoutRequest:
+      type: object
+      required: [shipping_address, payment_method]
+      properties:
+        shipping_address: { type: string }
+        payment_method: { type: string, enum: [stripe, paypal, cash] }
+        payment_token: { type: string, nullable: true }
+        payment_email: { type: string, format: email, nullable: true }
 
     GenericData:
       type: object
@@ -458,4 +773,4 @@ components:
       properties:
         status: { $ref: '#/components/schemas/StatusString' }
         message: { $ref: '#/components/schemas/MessageString' }
-        data: { $ref: '#/components/schemas/GenericData' }
+        data: { type: object, nullable: true }

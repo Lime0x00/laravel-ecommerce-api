@@ -1,0 +1,10 @@
+stateDiagram-v2
+    [*] --> pending
+    pending --> processing : Payment Confirmed
+    pending --> cancelled : Customer Cancel / Timeout
+    processing --> shipped : Items Dispatched
+    processing --> cancelled : Out of Stock / Issue
+    shipped --> delivered : Successful Delivery
+    shipped --> cancelled : Return / Delivery Failure
+    delivered --> [*]
+    cancelled --> [*]

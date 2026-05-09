@@ -1,0 +1,49 @@
+graph TD
+    %% Actors
+    Client[REST Client / Frontend]
+
+    %% Gateway
+    subgraph "Infrastructure & Security"
+        Routes[Laravel Routing]
+        Throttle[Throttle Middleware]
+        JWTMiddleware[JWT Auth Middleware]
+    end
+
+    %% Application
+    subgraph "Application Logic (Orchestration)"
+        Controllers[API Controllers]
+        Services[Domain Services]
+        Factories[Payment Factories]
+    end
+
+    %% Persistence
+    subgraph "Data Access (Abstraction)"
+        Repositories[Eloquent Repositories]
+        ORM[Eloquent ORM]
+    end
+
+    %% External Systems
+    subgraph "External Providers"
+        StripeAPI[Stripe Payment API]
+        SMTPServer[Mail / SMTP Server]
+    end
+
+    %% Database
+    DB[(SQLite/MySQL Database)]
+
+    %% Connections
+    Client --> Routes
+    Routes --> Throttle
+    Throttle --> JWTMiddleware
+    JWTMiddleware --> Controllers
+    Controllers --> Services
+    Services --> Factories
+    Factories --> StripeAPI
+    Services --> Repositories
+    Repositories --> ORM
+    ORM --> DB
+
+    %% Side-Effects
+    Services -.-> Events[Laravel Events/Listeners]
+    Events -.-> SMTPServer
+    Services -.-> Traits[ApiResponse Trait]

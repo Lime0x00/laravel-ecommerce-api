@@ -1,0 +1,26 @@
+graph LR
+    subgraph Actors
+        Customer((Customer))
+        Admin((Administrator))
+    end
+
+    subgraph "System: Laravel E-commerce API"
+        UC1(Browse Catalog)
+        UC2(Manage Cart)
+        UC3(Place Order)
+        UC4(View Order History)
+        UC5(Manage Products)
+        UC6(Manage Categories)
+        UC7(Update Order Status)
+    end
+
+    Customer --> UC1
+    Customer --> UC2
+    Customer --> UC3
+    Customer --> UC4
+
+    Admin --> UC1
+    Admin --> UC5
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC4

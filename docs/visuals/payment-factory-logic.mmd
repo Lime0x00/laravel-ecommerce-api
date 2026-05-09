@@ -1,0 +1,14 @@
+flowchart LR
+    Input(["driver_string"]) --> Factory["PaymentGatewayFactory::make"]
+    
+    subgraph "Factory Logic (Match)"
+        Factory --> S{Match Driver}
+        S -- "stripe" --> Stripe["new StripePaymentGateway"]
+        S -- "paypal" --> PayPal["new PayPalPaymentGateway"]
+        S -- "square" --> Square["new SquarePaymentGateway"]
+        S -- "default" --> Err["Throw InvalidArgumentException"]
+    end
+    
+    Stripe --> Output(["PaymentGatewayInterface"])
+    PayPal --> Output
+    Square --> Output

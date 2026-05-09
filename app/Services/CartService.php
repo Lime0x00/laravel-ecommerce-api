@@ -90,7 +90,6 @@ class CartService
     {
         if (!$cart instanceof Cart) {
             return [
-                'session_id' => $sessionId,
                 'items' => [],
                 'total' => 0.0,
             ];
@@ -122,7 +121,6 @@ class CartService
         return [
             'cart_id' => $cart->id,
             'user_id' => $cart->user_id,
-            'session_id' => $cart->session_id ?? $sessionId,
             'items' => $items,
             'total' => (float) $items->sum('subtotal'),
         ];

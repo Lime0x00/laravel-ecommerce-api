@@ -12,6 +12,7 @@ request:
         "name": "John Doe",
         "email": "john@example.com",
         "password": "secret123456",
+        "password_confirmation": "secret123456",
         "role": "customer"
       }
 response:
